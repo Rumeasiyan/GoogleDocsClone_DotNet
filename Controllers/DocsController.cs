@@ -25,13 +25,19 @@ namespace GoogleDocsClone.Controllers
         // GET: Docs
         public async Task<IActionResult> Index()
         {
-            var applicationDbContext = _context.Docs.Include(d => d.User);
-            return View(await applicationDbContext.ToListAsync());
+            var applicationDbContext = from c in _context.Docs
+                                       select c;
+            applicationDbContext = applicationDbContext.Where(a => a.UserId == User.FindFirstValue(ClaimTypes.NameIdentifier));
+
+            return View(await applicationDbContext.Include(d => d.User).ToListAsync());
         }
-        
+
+       
+
         // GET: Docs/Create
         public IActionResult Create()
         {
+            
             return View();
         }
 
@@ -48,14 +54,14 @@ namespace GoogleDocsClone.Controllers
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["UserId"] = new SelectList(_context.Users, "Id", "Id", doc.UserId);
+            
             return View(doc);
         }
 
         // GET: Docs/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null)
+            if (id == null || _context.Docs == null)
             {
                 return NotFound();
             }
@@ -67,9 +73,9 @@ namespace GoogleDocsClone.Controllers
             }
             if (doc.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
             {
-                return Unauthorized();
+                return NotFound();
             }
-            
+
             return View(doc);
         }
 
@@ -112,7 +118,7 @@ namespace GoogleDocsClone.Controllers
         // GET: Docs/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null)
+            if (id == null || _context.Docs == null)
             {
                 return NotFound();
             }
@@ -126,7 +132,7 @@ namespace GoogleDocsClone.Controllers
             }
             if (doc.UserId != User.FindFirstValue(ClaimTypes.NameIdentifier))
             {
-                return Unauthorized();
+                return NotFound();
             }
 
             return View(doc);
@@ -137,19 +143,23 @@ namespace GoogleDocsClone.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
+            if (_context.Docs == null)
+            {
+                return Problem("Entity set 'ApplicationDbContext.Docs'  is null.");
+            }
             var doc = await _context.Docs.FindAsync(id);
             if (doc != null)
             {
                 _context.Docs.Remove(doc);
             }
-
+            
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
         private bool DocExists(int id)
         {
-            return _context.Docs.Any(e => e.Id == id);
+          return (_context.Docs?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }
