@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using GoogleDocsClone.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace GoogleDocsClone.Data
@@ -9,5 +10,6 @@ namespace GoogleDocsClone.Data
             : base(options)
         {
         }
+        public DbSet<Doc> Docs { get; set; }
     }
 }
